@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sudoku</string>
+    <string name="board_description">Sudoku board</string>
+    <string name="title_format">%1$s · %2$s · %3$d givens</string>
+    <string name="undo">Undo</string>
+    <string name="erase">Erase</string>
+    <string name="notes_off">Notes: off</string>
+    <string name="notes_on">Notes: on</string>
+    <string name="hint">Hint</string>
+    <string name="check">Check for mistakes</string>
+    <string name="check_ok">No mistakes so far</string>
+    <plurals name="check_errors">
+        <item quantity="one">%d mistake highlighted</item>
+        <item quantity="other">%d mistakes highlighted</item>
+    </plurals>
+    <string name="select_cell_first">Select a cell first</string>
+    <string name="no_solution">This puzzle has no solution</string>
+    <string name="digit_description">Digit %1$d, %2$d left</string>
+    <string name="solved_timer">Solved · %s</string>
+    <string name="solved_title">Solved!</string>
+    <string name="solved_message">You solved %1$s. %2$s</string>
+
+    <string name="import_title">Import SDK81 puzzle</string>
+    <string name="import_action">Import</string>
+    <string name="import_help">Paste one or more puzzles: 81 digits each, row by row, 0 for an empty cell. Spaces and line breaks are ignored.</string>
+    <string name="import_hint">000013400080006950650000000…</string>
+    <string name="import_count">%d digits (81 per puzzle)</string>
+    <string name="paste">Paste</string>
+    <string name="clipboard_empty">Clipboard is empty</string>
+    <string name="puzzle_n">Puzzle %d: </string>
+    <string name="error_conflict">Givens break the rules: a digit repeats in a row, column or 3×3 box.</string>
+    <string name="error_unsolvable">This puzzle has no solution.</string>
+    <string name="warn_multiple">Has more than one solution. Hints follow one of them.</string>
+    <string name="imported_one">Imported %s</string>
+    <string name="imported_many">Imported %d puzzles</string>
+
+    <string name="puzzles_title">Puzzles</string>
+    <string name="status_solved">Solved ✓</string>
+    <string name="delete_current">Delete current</string>
+    <string name="delete_title">Delete %s?</string>
+    <string name="delete_message">The puzzle and its progress will be removed.</string>
+    <string name="delete">Delete</string>
+
+    <string name="copy_puzzle">Copy puzzle (SDK81)</string>
+    <string name="copy_progress">Copy progress (SDK81)</string>
+    <string name="clip_puzzle_label">Puzzle</string>
+    <string name="clip_progress_label">Progress</string>
+    <string name="copied">%s copied to clipboard</string>
+    <string name="restart">Restart</string>
+    <string name="restart_title">Restart puzzle?</string>
+    <string name="restart_message">Your entries, notes and time for this puzzle will be cleared.</string>
+
+    <string name="format_title">SDK81-v1 format</string>
+    <string name="format_info">Format: SDK81-v1\nGrid: 9 × 9, row-major\nIndex: row * 9 + column\n0 = empty, 1–9 = given\nLength: exactly 81 digits\n\n%1$s:\n%2$s</string>
+</resources>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="accent">#FF8C9EFF</color>
+    <color name="accent_dark">#FF1A1C24</color>
+    <color name="screen_bg">#FF121318</color>
+    <color name="text_primary">#FFE6E7EE</color>
+    <color name="text_secondary">#FFA3A6B5</color>
+
+    <color name="board_bg">#FF1E2029</color>
+    <color name="board_peer">#FF282C3D</color>
+    <color name="board_same_digit">#FF34406B</color>
+    <color name="board_selected">#FF46559A</color>
+    <color name="board_conflict_bg">#FF4A2328</color>
+    <color name="board_solved">#FF1E3326</color>
+    <color name="grid_thin">#FF3A3D4C</color>
+    <color name="grid_thick">#FFB4B8C8</color>
+    <color name="text_given">#FFE6E7EE</color>
+    <color name="text_user">#FF9FB0FF</color>
+    <color name="text_error">#FFFF7B7B</color>
+    <color name="text_note">#FF9DA1B2</color>
+</resources>
