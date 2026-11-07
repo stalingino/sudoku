@@ -2,6 +2,7 @@
 <resources>
     <color name="accent">#FF8C9EFF</color>
     <color name="accent_dark">#FF1A1C24</color>
+    <color name="toolbar_bg">#FF1A1C24</color>
     <color name="screen_bg">#FF121318</color>
     <color name="text_primary">#FFE6E7EE</color>
     <color name="text_secondary">#FFA3A6B5</color>

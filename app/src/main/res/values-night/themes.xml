@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="AppTheme" parent="android:Theme.Material">
+    <style name="AppTheme" parent="android:Theme.Material.NoActionBar">
         <item name="android:colorPrimary">@color/accent_dark</item>
         <item name="android:colorPrimaryDark">@color/accent_dark</item>
         <item name="android:colorAccent">@color/accent</item>
         <item name="android:windowBackground">@color/screen_bg</item>
     </style>
+    <style name="ToolbarPopup" parent="android:ThemeOverlay.Material.Dark" />
 </resources>

@@ -6,7 +6,10 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -18,11 +21,14 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.Toolbar;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -80,6 +86,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setupEdgeToEdge();
 
         board = findViewById(R.id.board);
         titleView = findViewById(R.id.title);
@@ -107,6 +114,60 @@ public class MainActivity extends Activity {
             refresh();
         }
         handleIncomingIntent(getIntent());
+    }
+
+    /**
+     * Draws behind the system bars on every API level (Android 15+ enforces this for apps
+     * targeting API 35) and pads the toolbar and content by the bar insets so nothing hides.
+     */
+    @SuppressWarnings("deprecation")
+    private void setupEdgeToEdge() {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setActionBar(toolbar);
+        View root = findViewById(R.id.root);
+        View bar = findViewById(R.id.toolbar_container);
+        View content = findViewById(R.id.content);
+        boolean night = (getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            getWindow().setDecorFitsSystemWindows(false);
+            WindowInsetsController c = getWindow().getInsetsController();
+            if (c != null) {
+                c.setSystemBarsAppearance(night ? 0 : WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
+                        WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+                                | WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
+            }
+        } else {
+            int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
+            if (!night && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            }
+            root.setSystemUiVisibility(flags);
+        }
+
+        int cLeft = content.getPaddingLeft(), cRight = content.getPaddingRight(), cBottom = content.getPaddingBottom();
+        root.setOnApplyWindowInsetsListener((v, insets) -> {
+            int left, top, right, bottom;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                android.graphics.Insets i = insets.getInsets(
+                        WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+                left = i.left; top = i.top; right = i.right; bottom = i.bottom;
+            } else {
+                left = insets.getSystemWindowInsetLeft();
+                top = insets.getSystemWindowInsetTop();
+                right = insets.getSystemWindowInsetRight();
+                bottom = insets.getSystemWindowInsetBottom();
+            }
+            bar.setPadding(left, top, right, 0);
+            content.setPadding(cLeft + left, content.getPaddingTop(), cRight + right, cBottom + bottom);
+            return insets;
+        });
+        root.requestApplyInsets();
     }
 
     @Override

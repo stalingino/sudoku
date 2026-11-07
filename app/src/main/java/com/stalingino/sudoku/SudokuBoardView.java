@@ -91,13 +91,18 @@ public class SudokuBoardView extends View {
         int w = MeasureSpec.getSize(widthMeasureSpec);
         int h = MeasureSpec.getSize(heightMeasureSpec);
         int hMode = MeasureSpec.getMode(heightMeasureSpec);
-        int size = (hMode == MeasureSpec.UNSPECIFIED) ? w : Math.min(w, h);
-        setMeasuredDimension(size, size);
+        if (hMode == MeasureSpec.EXACTLY) {
+            // Take the whole slot (e.g. a weighted area); the grid is centred in onDraw.
+            setMeasuredDimension(w, h);
+        } else {
+            int size = (hMode == MeasureSpec.UNSPECIFIED) ? w : Math.min(w, h);
+            setMeasuredDimension(size, size);
+        }
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        float pad = thickLine.getStrokeWidth();
+        float pad = thickLine.getStrokeWidth() / 2f;
         float size = Math.min(w, h) - pad * 2;
         cell = size / 9f;
         originX = (w - size) / 2f;
@@ -178,8 +183,8 @@ public class SudokuBoardView extends View {
     public boolean onTouchEvent(MotionEvent e) {
         int action = e.getActionMasked();
         if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE) {
-            int c = (int) ((e.getX() - originX) / cell);
-            int r = (int) ((e.getY() - originY) / cell);
+            int c = (int) Math.floor((e.getX() - originX) / cell);
+            int r = (int) Math.floor((e.getY() - originY) / cell);
             if (r >= 0 && r < 9 && c >= 0 && c < 9) {
                 int idx = r * 9 + c;
                 if (idx != selected && listener != null) {
