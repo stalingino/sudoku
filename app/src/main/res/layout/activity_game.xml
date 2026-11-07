@@ -5,22 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <!-- Takes the status-bar inset as padding so the toolbar keeps its full height. -->
-    <FrameLayout
-        android:id="@+id/toolbar_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/toolbar_bg"
-        android:elevation="4dp">
-
-        <Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?android:attr/actionBarSize"
-            android:popupTheme="@style/ToolbarPopup"
-            android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
-            android:title="@string/app_name" />
-    </FrameLayout>
+    <include layout="@layout/toolbar" />
 
     <LinearLayout
         android:id="@+id/content"
@@ -43,8 +28,16 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:textColor="@color/text_primary"
-                android:textSize="16sp"
+                android:textSize="15sp"
                 android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/mistakes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="15sp" />
 
             <TextView
                 android:id="@+id/timer"
@@ -52,7 +45,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="monospace"
                 android:textColor="@color/text_secondary"
-                android:textSize="16sp" />
+                android:textSize="15sp" />
         </LinearLayout>
 
         <!-- Fills the free space; the square grid is drawn centred within it. -->

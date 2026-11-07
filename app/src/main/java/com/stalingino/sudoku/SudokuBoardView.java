@@ -23,6 +23,7 @@ public class SudokuBoardView extends View {
     private boolean[] wrong = new boolean[81];
     private int selected = -1;
     private boolean solved;
+    private boolean highlightSame = true;
     private OnCellSelectedListener listener;
 
     private final Paint thinLine = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -67,6 +68,11 @@ public class SudokuBoardView extends View {
 
         setFocusable(true);
         setHapticFeedbackEnabled(true);
+    }
+
+    public void setHighlightSameDigits(boolean on) {
+        highlightSame = on;
+        invalidate();
     }
 
     public void setOnCellSelectedListener(OnCellSelectedListener l) {
@@ -127,7 +133,7 @@ public class SudokuBoardView extends View {
             if (selected >= 0) {
                 boolean peer = r == sr || c == sc || (r / 3 == sr / 3 && c / 3 == sc / 3);
                 if (i == selected) bg = colorSelected;
-                else if (selValue != 0 && values[i] == selValue) bg = colorSameDigit;
+                else if (highlightSame && selValue != 0 && values[i] == selValue) bg = colorSameDigit;
                 else if (peer) bg = colorPeer;
             }
             if ((conflicts[i] || wrong[i]) && i != selected) bg = colorConflictBg;

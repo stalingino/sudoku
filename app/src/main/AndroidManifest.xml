@@ -10,7 +10,7 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".HomeActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize">
@@ -32,5 +32,15 @@
                 <data android:scheme="sudoku" android:host="import" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".LevelsActivity"
+            android:exported="false"
+            android:parentActivityName=".HomeActivity" />
+
+        <activity
+            android:name=".GameActivity"
+            android:exported="false"
+            android:parentActivityName=".HomeActivity" />
     </application>
 </manifest>

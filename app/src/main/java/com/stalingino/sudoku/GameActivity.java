@@ -1,15 +1,11 @@
 package com.stalingino.sudoku;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
-import android.graphics.Color;
 import android.graphics.Typeface;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -20,23 +16,18 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.WindowInsets;
-import android.view.WindowInsetsController;
+import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Toolbar;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
-import java.util.List;
-import java.util.Locale;
 
-public class MainActivity extends Activity {
+/** Plays one puzzle: a level, the daily challenge or an imported SDK81 puzzle. */
+public class GameActivity extends BaseActivity {
+    public static final String EXTRA_ID = "puzzle_id";
 
     private static final String STATE_SELECTED = "selected";
     private static final String STATE_NOTES_MODE = "notes_mode";
@@ -51,13 +42,20 @@ public class MainActivity extends Activity {
         }
     }
 
+    public static void start(Context ctx, PuzzleRecord r) {
+        ctx.startActivity(new Intent(ctx, GameActivity.class).putExtra(EXTRA_ID, r.id));
+    }
+
     private PuzzleStore store;
+    private Settings settings;
     private PuzzleRecord record;
 
     private int[] givens;
     private int[] values;
     private int[] notes;
     private int[] solution;
+    /** Mistakes are only judged against a unique solution. */
+    private boolean uniqueSolution;
     private boolean[] wrong = new boolean[81];
     private final Deque<Move> undo = new ArrayDeque<>();
     private int selected = -1;
@@ -66,6 +64,7 @@ public class MainActivity extends Activity {
     private SudokuBoardView board;
     private TextView titleView;
     private TextView timerView;
+    private TextView mistakesView;
     private Button notesButton;
     private final Button[] digitButtons = new Button[10];
 
@@ -74,9 +73,9 @@ public class MainActivity extends Activity {
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
-            if (!timerRunning || record == null || record.solved) return;
+            if (!timerRunning || record.solved) return;
             record.elapsedSeconds++;
-            updateTimer();
+            updateStatus();
             if (record.elapsedSeconds % 10 == 0) store.save();
             handler.postDelayed(this, 1000);
         }
@@ -85,12 +84,20 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        setupEdgeToEdge();
+        store = PuzzleStore.get(this);
+        record = store.find(getIntent().getStringExtra(EXTRA_ID));
+        if (record == null) {
+            finish();
+            return;
+        }
+        settings = new Settings(this);
+        setContentView(R.layout.activity_game);
+        setupChrome(record.displayName(), true);
 
         board = findViewById(R.id.board);
         titleView = findViewById(R.id.title);
         timerView = findViewById(R.id.timer);
+        mistakesView = findViewById(R.id.mistakes);
         notesButton = findViewById(R.id.btn_notes);
 
         board.setOnCellSelectedListener(index -> {
@@ -106,74 +113,12 @@ public class MainActivity extends Activity {
         findViewById(R.id.btn_hint).setOnClickListener(v -> hint());
         buildKeypad(findViewById(R.id.keypad));
 
-        store = new PuzzleStore(this);
-        loadPuzzle(store.current());
+        loadPuzzle();
         if (savedInstanceState != null) {
             selected = savedInstanceState.getInt(STATE_SELECTED, -1);
             notesMode = savedInstanceState.getBoolean(STATE_NOTES_MODE, false);
             refresh();
         }
-        handleIncomingIntent(getIntent());
-    }
-
-    /**
-     * Draws behind the system bars on every API level (Android 15+ enforces this for apps
-     * targeting API 35) and pads the toolbar and content by the bar insets so nothing hides.
-     */
-    @SuppressWarnings("deprecation")
-    private void setupEdgeToEdge() {
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setActionBar(toolbar);
-        View root = findViewById(R.id.root);
-        View bar = findViewById(R.id.toolbar_container);
-        View content = findViewById(R.id.content);
-        boolean night = (getResources().getConfiguration().uiMode
-                & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
-
-        getWindow().setStatusBarColor(Color.TRANSPARENT);
-        getWindow().setNavigationBarColor(Color.TRANSPARENT);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            getWindow().setDecorFitsSystemWindows(false);
-            WindowInsetsController c = getWindow().getInsetsController();
-            if (c != null) {
-                c.setSystemBarsAppearance(night ? 0 : WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
-                        WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
-                                | WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
-            }
-        } else {
-            int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
-            if (!night && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-            }
-            root.setSystemUiVisibility(flags);
-        }
-
-        int cLeft = content.getPaddingLeft(), cRight = content.getPaddingRight(), cBottom = content.getPaddingBottom();
-        root.setOnApplyWindowInsetsListener((v, insets) -> {
-            int left, top, right, bottom;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                android.graphics.Insets i = insets.getInsets(
-                        WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
-                left = i.left; top = i.top; right = i.right; bottom = i.bottom;
-            } else {
-                left = insets.getSystemWindowInsetLeft();
-                top = insets.getSystemWindowInsetTop();
-                right = insets.getSystemWindowInsetRight();
-                bottom = insets.getSystemWindowInsetBottom();
-            }
-            bar.setPadding(left, top, right, 0);
-            content.setPadding(cLeft + left, content.getPaddingTop(), cRight + right, cBottom + bottom);
-            return insets;
-        });
-        root.requestApplyInsets();
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        handleIncomingIntent(intent);
     }
 
     @Override
@@ -186,72 +131,85 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (record == null) return;
+        if (settings.keepScreenOn()) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        board.setHighlightSameDigits(settings.highlightSame());
+        markWrongEntries();
+        refresh();
         startTimer();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        if (record == null) return;
         stopTimer();
         persist();
     }
 
     // ---------------------------------------------------------------- puzzle lifecycle
 
-    private void loadPuzzle(PuzzleRecord r) {
-        if (record != null) persist();
-        record = r;
-        store.setCurrent(r);
+    private void loadPuzzle() {
+        store.setCurrent(record);
         try {
-            givens = Sdk81.parse(r.puzzle);
-            values = Sdk81.parse(r.progress);
+            givens = Sdk81.parse(record.puzzle);
+            values = Sdk81.parse(record.progress);
         } catch (Sdk81.FormatException e) {
-            r.reset();
+            record.reset();
             values = givens.clone();
         }
         // Givens are immutable: always restore them from the original string.
         for (int i = 0; i < 81; i++) if (givens[i] != 0) values[i] = givens[i];
-        notes = PuzzleRecord.decodeNotes(r.notes);
+        notes = PuzzleRecord.decodeNotes(record.notes);
         solution = Solver.solve(givens);
+        uniqueSolution = solution != null && Solver.countSolutions(givens, 2) == 1;
         wrong = new boolean[81];
         undo.clear();
         selected = -1;
         notesMode = false;
+        markWrongEntries();
         refresh();
-        stopTimer();
-        startTimer();
     }
 
     private void persist() {
-        if (record == null) return;
         record.progress = Sdk81.serialize(values);
         record.notes = PuzzleRecord.encodeNotes(notes);
         store.save();
     }
 
     private void restart() {
-        PuzzleRecord r = record;
-        r.reset();
-        record = null; // skip saving the old board over the reset progress
-        loadPuzzle(r);
+        stopTimer();
+        record.reset();
         persist();
+        loadPuzzle();
+        startTimer();
     }
 
     // ---------------------------------------------------------------- input
 
     private void buildKeypad(LinearLayout keypad) {
+        float density = getResources().getDisplayMetrics().density;
+        int gap = Math.round(2 * density);
         for (int d = 1; d <= 9; d++) {
-            Button b = new Button(this);
+            Button b = new Button(this, null, 0, android.R.style.Widget_Material_Button_Borderless);
+            b.setBackgroundResource(R.drawable.bg_key);
             b.setMinWidth(0);
             b.setMinimumWidth(0);
+            b.setMinHeight(0);
+            b.setMinimumHeight(0);
             b.setPadding(0, 0, 0, 0);
             b.setAllCaps(false);
+            b.setGravity(Gravity.CENTER);
             b.setTypeface(Typeface.DEFAULT_BOLD);
             b.setTextSize(22);
+            b.setTextColor(getColor(R.color.key_text));
+            b.setStateListAnimator(null);
             final int digit = d;
             b.setOnClickListener(v -> enterDigit(digit));
             LinearLayout.LayoutParams lp =
                     new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+            lp.setMargins(gap, 0, gap, 0);
             keypad.addView(b, lp);
             digitButtons[d] = b;
         }
@@ -262,6 +220,7 @@ public class MainActivity extends Activity {
     }
 
     private void enterDigit(int d) {
+        if (record.solved) return;
         if (selected < 0) {
             Toast.makeText(this, R.string.select_cell_first, Toast.LENGTH_SHORT).show();
             return;
@@ -276,7 +235,14 @@ public class MainActivity extends Activity {
             values[selected] = values[selected] == d ? 0 : d;
             notes[selected] = 0;
             wrong[selected] = false;
-            if (values[selected] != 0) clearPeerNotes(selected, d);
+            int v = values[selected];
+            if (v != 0) {
+                if (uniqueSolution && v != solution[selected]) {
+                    record.mistakes++;
+                    if (settings.showMistakes()) wrong[selected] = true;
+                }
+                if (settings.autoRemoveNotes()) clearPeerNotes(selected, v);
+            }
         }
         afterMove();
     }
@@ -301,21 +267,43 @@ public class MainActivity extends Activity {
         if (isEditable(selected) && values[selected] != solution[selected]) {
             target = selected;
         } else {
+            // Prefer the empty cell with the fewest candidates: the most natural next step.
+            int bestCount = 10;
             for (int i = 0; i < 81; i++) {
-                if (givens[i] == 0 && values[i] != solution[i]) {
+                if (givens[i] != 0 || values[i] == solution[i]) continue;
+                int n = values[i] != 0 ? 0 : candidateCount(i);
+                if (n < bestCount) {
+                    bestCount = n;
                     target = i;
-                    break;
                 }
             }
         }
         if (target < 0) return;
+        record.hints++;
         pushUndo(target);
         values[target] = solution[target];
         notes[target] = 0;
         wrong[target] = false;
-        clearPeerNotes(target, solution[target]);
+        if (settings.autoRemoveNotes()) clearPeerNotes(target, solution[target]);
         selected = target;
         afterMove();
+    }
+
+    private int candidateCount(int index) {
+        int used = 0, r = index / 9, c = index % 9;
+        for (int k = 0; k < 9; k++) {
+            used |= 1 << values[r * 9 + k];
+            used |= 1 << values[k * 9 + c];
+            used |= 1 << values[((r / 3) * 3 + k / 3) * 9 + (c / 3) * 3 + k % 3];
+        }
+        return Integer.bitCount(~used & 0x3FE);
+    }
+
+    private void markWrongEntries() {
+        boolean show = uniqueSolution && settings.showMistakes();
+        for (int i = 0; i < 81; i++) {
+            wrong[i] = show && givens[i] == 0 && values[i] != 0 && values[i] != solution[i];
+        }
     }
 
     private void checkProgress() {
@@ -328,11 +316,10 @@ public class MainActivity extends Activity {
             wrong[i] = givens[i] == 0 && values[i] != 0 && values[i] != solution[i];
             if (wrong[i]) errors++;
         }
-        record.mistakesChecked++;
         refresh();
         Toast.makeText(this, errors == 0
-                ? getString(R.string.check_ok)
-                : getResources().getQuantityString(R.plurals.check_errors, errors, errors),
+                        ? getString(R.string.check_ok)
+                        : getResources().getQuantityString(R.plurals.check_errors, errors, errors),
                 Toast.LENGTH_SHORT).show();
     }
 
@@ -363,11 +350,11 @@ public class MainActivity extends Activity {
         boolean complete = true;
         for (int v : values) if (v == 0) { complete = false; break; }
         if (complete && !Sdk81.hasConflicts(values)) {
-            record.solved = true;
             stopTimer();
+            boolean newBest = record.complete();
             persist();
             refresh();
-            showSolvedDialog();
+            showSolvedDialog(newBest);
             return;
         }
         persist();
@@ -422,8 +409,7 @@ public class MainActivity extends Activity {
         boolean[] conflicts = Sdk81.conflicts(values);
         board.setState(givens, values, notes, conflicts, wrong, selected, record.solved);
 
-        titleView.setText(getString(R.string.title_format, record.id, record.difficulty(), record.givens()));
-        updateTimer();
+        updateStatus();
 
         notesButton.setText(notesMode ? R.string.notes_on : R.string.notes_off);
         notesButton.setSelected(notesMode);
@@ -442,16 +428,19 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void updateTimer() {
-        long s = record.elapsedSeconds;
-        String time = s >= 3600
-                ? String.format(Locale.US, "%d:%02d:%02d", s / 3600, (s / 60) % 60, s % 60)
-                : String.format(Locale.US, "%02d:%02d", s / 60, s % 60);
+    private void updateStatus() {
+        String info = record.isLevel() || record.isDaily()
+                ? record.difficultyLabel()
+                : getString(R.string.title_format, record.id, record.difficultyLabel(), record.givens());
+        if (record.hints > 0) info += " · " + getResources().getQuantityString(R.plurals.hints_used, record.hints, record.hints);
+        titleView.setText(info);
+        mistakesView.setText(uniqueSolution ? getString(R.string.mistakes_count, record.mistakes) : "");
+        String time = formatTime(record.elapsedSeconds);
         timerView.setText(record.solved ? getString(R.string.solved_timer, time) : time);
     }
 
     private void startTimer() {
-        if (timerRunning || record == null || record.solved) return;
+        if (timerRunning || record.solved) return;
         timerRunning = true;
         handler.postDelayed(tick, 1000);
     }
@@ -465,18 +454,14 @@ public class MainActivity extends Activity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
+        getMenuInflater().inflate(R.menu.game, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.action_import) {
-            showImportDialog(null);
-        } else if (id == R.id.action_puzzles) {
-            showPuzzleList();
-        } else if (id == R.id.action_check) {
+        if (id == R.id.action_check) {
             checkProgress();
         } else if (id == R.id.action_copy_puzzle) {
             copyToClipboard(getString(R.string.clip_puzzle_label), record.puzzle);
@@ -503,141 +488,7 @@ public class MainActivity extends Activity {
         Toast.makeText(this, getString(R.string.copied, label), Toast.LENGTH_SHORT).show();
     }
 
-    // ---------------------------------------------------------------- import
-
-    private void handleIncomingIntent(Intent intent) {
-        if (intent == null) return;
-        String text = null;
-        if (Intent.ACTION_SEND.equals(intent.getAction())) {
-            text = intent.getStringExtra(Intent.EXTRA_TEXT);
-        } else if (Intent.ACTION_VIEW.equals(intent.getAction()) && intent.getData() != null) {
-            text = intent.getData().getQueryParameter("p");
-        }
-        if (text != null) {
-            intent.setAction(Intent.ACTION_MAIN); // don't re-import on rotation
-            showImportDialog(text);
-        }
-    }
-
-    private String clipboardText() {
-        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        if (cm == null || !cm.hasPrimaryClip() || cm.getPrimaryClip().getItemCount() == 0) return null;
-        CharSequence cs = cm.getPrimaryClip().getItemAt(0).coerceToText(this);
-        return cs == null ? null : cs.toString();
-    }
-
-    private void showImportDialog(String prefill) {
-        View content = getLayoutInflater().inflate(R.layout.dialog_import, null);
-        EditText input = content.findViewById(R.id.import_input);
-        TextView status = content.findViewById(R.id.import_status);
-        if (prefill != null) input.setText(prefill);
-
-        content.findViewById(R.id.import_paste).setOnClickListener(v -> {
-            String clip = clipboardText();
-            if (clip == null) {
-                status.setText(R.string.clipboard_empty);
-            } else {
-                input.setText(clip);
-                input.setSelection(input.length());
-            }
-        });
-        input.addTextChangedListener(new SimpleTextWatcher(s -> {
-            String n = Sdk81.normalize(s);
-            status.setText(getString(R.string.import_count, n.length()));
-        }));
-        status.setText(getString(R.string.import_count, Sdk81.normalize(input.getText().toString()).length()));
-
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(R.string.import_title)
-                .setView(content)
-                .setPositiveButton(R.string.import_action, null)
-                .setNegativeButton(android.R.string.cancel, null)
-                .create();
-        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String error = importPuzzles(input.getText().toString());
-            if (error == null) dialog.dismiss();
-            else status.setText(error);
-        }));
-        dialog.show();
-    }
-
-    /** Imports one or more puzzles. Returns an error message, or null on success. */
-    private String importPuzzles(String text) {
-        List<String> parsed;
-        try {
-            parsed = Sdk81.parseMany(text);
-        } catch (Sdk81.FormatException e) {
-            return e.getMessage();
-        }
-        List<String> warnings = new ArrayList<>();
-        List<PuzzleRecord> added = new ArrayList<>();
-        int n = 0;
-        for (String p : parsed) {
-            n++;
-            String prefix = parsed.size() > 1 ? getString(R.string.puzzle_n, n) : "";
-            int[] grid;
-            try {
-                grid = Sdk81.parse(p);
-            } catch (Sdk81.FormatException e) {
-                return prefix + e.getMessage();
-            }
-            if (Sdk81.hasConflicts(grid)) return prefix + getString(R.string.error_conflict);
-            int solutions = Solver.countSolutions(grid, 2);
-            if (solutions == 0) return prefix + getString(R.string.error_unsolvable);
-            if (solutions > 1) warnings.add(prefix + getString(R.string.warn_multiple));
-        }
-        for (String p : parsed) added.add(store.add(p));
-        loadPuzzle(added.get(added.size() - 1));
-
-        String msg = added.size() == 1
-                ? getString(R.string.imported_one, added.get(0).id)
-                : getString(R.string.imported_many, added.size());
-        if (!warnings.isEmpty()) {
-            new AlertDialog.Builder(this)
-                    .setTitle(msg)
-                    .setMessage(String.join("\n", warnings))
-                    .setPositiveButton(android.R.string.ok, null)
-                    .show();
-        } else {
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-        }
-        return null;
-    }
-
     // ---------------------------------------------------------------- dialogs
-
-    private void showPuzzleList() {
-        persist();
-        List<PuzzleRecord> all = store.all();
-        CharSequence[] items = new CharSequence[all.size()];
-        for (int i = 0; i < all.size(); i++) {
-            PuzzleRecord r = all.get(i);
-            int pct = Math.round(100f * (r.filled() - r.givens()) / Math.max(1, 81 - r.givens()));
-            String status = r.solved ? getString(R.string.status_solved) : pct + "%";
-            String marker = r == record ? "▶ " : "";
-            items[i] = marker + r.id + " · " + r.difficulty() + " · " + status;
-        }
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.puzzles_title)
-                .setItems(items, (d, which) -> loadPuzzle(all.get(which)))
-                .setNeutralButton(R.string.delete_current, (d, w) -> confirmDelete())
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
-    }
-
-    private void confirmDelete() {
-        PuzzleRecord r = record;
-        new AlertDialog.Builder(this)
-                .setTitle(getString(R.string.delete_title, r.id))
-                .setMessage(R.string.delete_message)
-                .setPositiveButton(R.string.delete, (d, w) -> {
-                    record = null;
-                    store.delete(r);
-                    loadPuzzle(store.current());
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
-    }
 
     private void showFormatInfo() {
         TextView tv = new TextView(this);
@@ -654,12 +505,38 @@ public class MainActivity extends Activity {
                 .show();
     }
 
-    private void showSolvedDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.solved_title)
-                .setMessage(getString(R.string.solved_message, record.id, timerView.getText()))
-                .setPositiveButton(R.string.puzzles_title, (d, w) -> showPuzzleList())
-                .setNegativeButton(android.R.string.ok, null)
-                .show();
+    private void showSolvedDialog(boolean newBest) {
+        int stars = record.attemptStars();
+        StringBuilder msg = new StringBuilder();
+        msg.append(starString(stars)).append("\n\n");
+        msg.append(getString(R.string.solved_time, formatTime(record.elapsedSeconds)));
+        if (newBest && record.timesSolved > 1) msg.append("  ").append(getString(R.string.new_best));
+        else if (record.timesSolved > 1) msg.append("\n").append(getString(R.string.best_time, formatTime(record.bestSeconds)));
+        msg.append("\n").append(getString(R.string.solved_stats, record.mistakes, record.hints));
+        if (stars < 3) msg.append("\n\n").append(getString(R.string.stars_tip));
+
+        AlertDialog.Builder b = new AlertDialog.Builder(this)
+                .setTitle(record.isLevel() ? R.string.level_complete : R.string.solved_title)
+                .setMessage(msg.toString())
+                .setCancelable(false);
+        if (record.isLevel()) {
+            int next = record.level + 1;
+            boolean hasNext = next <= LevelPack.get(this, record.difficulty).size();
+            if (hasNext) {
+                b.setPositiveButton(R.string.next_level, (d, w) -> {
+                    start(this, store.level(record.difficulty, next));
+                    finish();
+                });
+            }
+            b.setNeutralButton(R.string.levels, (d, w) -> {
+                LevelsActivity.start(this, record.difficulty);
+                finish();
+            });
+            b.setNegativeButton(R.string.close, null);
+        } else {
+            b.setPositiveButton(R.string.home, (d, w) -> finish());
+            b.setNegativeButton(R.string.close, null);
+        }
+        b.show();
     }
 }

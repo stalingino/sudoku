@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="accent">#FF8C9EFF</color>
+    <color name="accent_fill">#FF4A58B0</color>
     <color name="accent_dark">#FF1A1C24</color>
     <color name="toolbar_bg">#FF1A1C24</color>
     <color name="screen_bg">#FF121318</color>
@@ -19,4 +20,17 @@
     <color name="text_user">#FF9FB0FF</color>
     <color name="text_error">#FFFF7B7B</color>
     <color name="text_note">#FF9DA1B2</color>
+    <color name="on_accent">#FFFFFFFF</color>
+    <color name="card_bg">#FF1E2029</color>
+    <color name="card_stroke">#FF2C2F3C</color>
+    <color name="icon_bg">#FF2A2E40</color>
+    <color name="ripple">#338C9EFF</color>
+    <color name="key_bg">#FF2A2E40</color>
+    <color name="key_text">#FFE6E7EE</color>
+    <color name="locked_bg">#FF1A1C23</color>
+    <color name="text_disabled">#FF5C6070</color>
+    <color name="diff_easy">#FF2E8B57</color>
+    <color name="diff_medium">#FF3570C0</color>
+    <color name="diff_hard">#FFC56A12</color>
+    <color name="diff_expert">#FFB03050</color>
 </resources>

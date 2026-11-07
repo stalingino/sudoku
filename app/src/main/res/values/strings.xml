@@ -2,7 +2,63 @@
 <resources>
     <string name="app_name">Sudoku</string>
     <string name="board_description">Sudoku board</string>
+
+    <!-- Home -->
+    <string name="home_summary">%1$d of %2$d levels solved · %3$d ★</string>
+    <string name="play">Play</string>
+    <string name="play_subtitle">%1$s · Level %2$d</string>
+    <string name="continue_game">Continue</string>
+    <string name="continue_subtitle">%1$s · %2$d%% · %3$s</string>
+    <string name="levels">Levels</string>
+    <string name="levels_subtitle">%1$d / %2$d solved · %3$d ★</string>
+    <string name="daily_challenge">Daily Challenge</string>
+    <string name="daily_new">A new puzzle every day</string>
+    <string name="daily_in_progress">Today\'s puzzle · %d%% done</string>
+    <string name="daily_done">Solved today in %s ✓</string>
+    <plurals name="streak">
+        <item quantity="one">🔥 %d day streak</item>
+        <item quantity="other">🔥 %d day streak</item>
+    </plurals>
+    <string name="my_puzzles">My Puzzles</string>
+    <plurals name="puzzle_count">
+        <item quantity="one">%d imported puzzle</item>
+        <item quantity="other">%d imported puzzles</item>
+    </plurals>
+    <string name="no_imports">You haven\'t imported any puzzles yet.</string>
+    <string name="import_subtitle">Paste an 81-digit SDK81 puzzle</string>
+    <string name="delete_ellipsis">Delete…</string>
+    <string name="delete_puzzles">Delete puzzles</string>
+    <string name="statistics">Stats</string>
+    <string name="settings">Settings</string>
+    <string name="how_to_play">Help</string>
+    <string name="stats_pack">%1$s\n%2$d / %3$d levels · %4$d / %5$d ★ · best %6$s</string>
+    <string name="stats_daily">Daily Challenge\n%1$d solved · current streak %2$d</string>
+    <string name="stats_total">Puzzles solved in total: %d</string>
+    <string name="setting_show_mistakes">Show mistakes as you play</string>
+    <string name="setting_highlight_same">Highlight matching digits</string>
+    <string name="setting_auto_notes">Remove notes automatically</string>
+    <string name="setting_screen_on">Keep screen on while playing</string>
+    <string name="reset_progress">Reset progress</string>
+    <string name="reset_progress_message">This erases all level progress, stars, daily results and imported puzzles. It can\'t be undone.</string>
+    <string name="reset">Reset</string>
+    <string name="help_text">Fill the grid so every row, every column and every 3×3 box contains the digits 1 to 9 exactly once.\n\n• Tap a cell, then a number.\n• Notes mode adds small pencil marks instead.\n• Hint fills in one correct cell.\n• Red digits break a rule or don\'t match the solution.\n\nStars: finish with no hints and no mistakes for ★★★. A hint or a mistake costs one star each.\n\nLevels unlock one at a time in each difficulty. The Daily Challenge is a new puzzle each day.\n\nImport your own puzzles as 81 digits (SDK81-v1): row by row, 0 for an empty cell.</string>
+
+    <!-- Levels -->
+    <string name="pack_summary">%1$d / %2$d solved · %3$d / %4$d ★</string>
+    <string name="best_time">Best %s</string>
+    <string name="percent">%d%%</string>
+    <string name="level_locked">Solve level %d first</string>
+    <string name="level_desc_done">Level %d, solved</string>
+    <string name="level_desc_open">Level %d</string>
+    <string name="level_desc_locked">Level %d, locked</string>
+
+    <!-- Game -->
     <string name="title_format">%1$s · %2$s · %3$d givens</string>
+    <string name="mistakes_count">Mistakes %d</string>
+    <plurals name="hints_used">
+        <item quantity="one">%d hint</item>
+        <item quantity="other">%d hints</item>
+    </plurals>
     <string name="undo">Undo</string>
     <string name="erase">Erase</string>
     <string name="notes_off">Notes: off</string>
@@ -19,9 +75,17 @@
     <string name="digit_description">Digit %1$d, %2$d left</string>
     <string name="solved_timer">Solved · %s</string>
     <string name="solved_title">Solved!</string>
-    <string name="solved_message">You solved %1$s. %2$s</string>
+    <string name="level_complete">Level complete!</string>
+    <string name="solved_time">Time %s</string>
+    <string name="new_best">New best!</string>
+    <string name="solved_stats">Mistakes %1$d · Hints %2$d</string>
+    <string name="stars_tip">Replay without hints or mistakes to earn ★★★.</string>
+    <string name="next_level">Next level</string>
+    <string name="home">Home</string>
+    <string name="close">Close</string>
 
-    <string name="import_title">Import SDK81 puzzle</string>
+    <!-- Import -->
+    <string name="import_title">Import puzzle</string>
     <string name="import_action">Import</string>
     <string name="import_help">Paste one or more puzzles: 81 digits each, row by row, 0 for an empty cell. Spaces and line breaks are ignored.</string>
     <string name="import_hint">000013400080006950650000000…</string>
@@ -31,17 +95,13 @@
     <string name="puzzle_n">Puzzle %d: </string>
     <string name="error_conflict">Givens break the rules: a digit repeats in a row, column or 3×3 box.</string>
     <string name="error_unsolvable">This puzzle has no solution.</string>
-    <string name="warn_multiple">Has more than one solution. Hints follow one of them.</string>
+    <string name="warn_multiple">Has more than one solution. Hints follow one of them, and mistakes aren\'t counted.</string>
     <string name="imported_one">Imported %s</string>
     <string name="imported_many">Imported %d puzzles</string>
-
-    <string name="puzzles_title">Puzzles</string>
-    <string name="status_solved">Solved ✓</string>
-    <string name="delete_current">Delete current</string>
-    <string name="delete_title">Delete %s?</string>
-    <string name="delete_message">The puzzle and its progress will be removed.</string>
+    <string name="status_solved">Solved</string>
     <string name="delete">Delete</string>
 
+    <!-- Puzzle menu -->
     <string name="copy_puzzle">Copy puzzle (SDK81)</string>
     <string name="copy_progress">Copy progress (SDK81)</string>
     <string name="clip_puzzle_label">Puzzle</string>
@@ -49,8 +109,7 @@
     <string name="copied">%s copied to clipboard</string>
     <string name="restart">Restart</string>
     <string name="restart_title">Restart puzzle?</string>
-    <string name="restart_message">Your entries, notes and time for this puzzle will be cleared.</string>
-
+    <string name="restart_message">Your entries, notes and time for this puzzle will be cleared. Stars you already earned are kept.</string>
     <string name="format_title">SDK81-v1 format</string>
     <string name="format_info">Format: SDK81-v1\nGrid: 9 × 9, row-major\nIndex: row * 9 + column\n0 = empty, 1–9 = given\nLength: exactly 81 digits\n\n%1$s:\n%2$s</string>
 </resources>
